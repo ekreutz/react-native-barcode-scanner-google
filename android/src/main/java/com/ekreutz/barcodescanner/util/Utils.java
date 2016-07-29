@@ -1,4 +1,4 @@
-package com.ekreutz.barcodescanner;
+package com.ekreutz.barcodescanner.util;
 
 import android.app.Activity;
 import android.content.Context;

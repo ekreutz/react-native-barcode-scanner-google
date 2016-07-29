@@ -66,6 +66,7 @@ public class CameraSourcePreview extends ViewGroup {
     public void stop() {
         if (mCameraSource != null) {
             mCameraSource.stop();
+
         }
     }
 
@@ -88,6 +89,7 @@ public class CameraSourcePreview extends ViewGroup {
         @Override
         public void surfaceCreated(SurfaceHolder surface) {
             mSurfaceAvailable = true;
+            Log.d("LAYOUTING", "surface created");
             try {
                 startIfReady();
             } catch (SecurityException se) {
@@ -99,11 +101,13 @@ public class CameraSourcePreview extends ViewGroup {
 
         @Override
         public void surfaceDestroyed(SurfaceHolder surface) {
+            Log.d("LAYOUTING", "destroyed");
             mSurfaceAvailable = false;
         }
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            Log.d("LAYOUTING", "surface changed");
             previewLayout();
         }
     }
@@ -114,6 +118,8 @@ public class CameraSourcePreview extends ViewGroup {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         mWidth = right - left;
         mHeight = bottom - top;
+
+        Log.d("LAYOUTING", "preview layout");
 
         previewLayout();
     }

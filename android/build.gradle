@@ -13,6 +13,6 @@ android {
 }
 
 dependencies {
-    compile 'com.google.android.gms:play-services:8.4.0' // 8.1.0 or higher required
+    compile 'com.google.android.gms:play-services-vision:8.4.0' // 8.1.0 or higher required
     compile "com.facebook.react:react-native:0.20.+"
 }

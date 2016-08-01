@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 
 import com.ekreutz.barcodescanner.camera.CameraSource;
 import com.ekreutz.barcodescanner.camera.CameraSourcePreview;
+import com.ekreutz.barcodescanner.util.BarcodeFormat;
 import com.ekreutz.barcodescanner.util.Utils;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
@@ -42,7 +44,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
 
     // For focusing we prefer two continuous methods first, and then finally the "auto" mode which is fired on tap.
     // A device should support at least one of these for scanning to be possible at all.
-    private static final String[] PREFERRED_FOCUS_MODES = {Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE, Camera.Parameters.FOCUS_MODE_AUTO};
+    private static final String[] PREFERRED_FOCUS_MODES = {Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE, Camera.Parameters.FOCUS_MODE_AUTO, Camera.Parameters.FOCUS_MODE_FIXED};
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
@@ -73,17 +75,36 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         return rc == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void init() {
-        mPreview = new CameraSourcePreview(mContext, null);
-        addView(mPreview);
+    public void init() {
+        if (hasCameraPermission()) {
+            mPreview = new CameraSourcePreview(mContext, null);
+            addView(mPreview);
 
-        start();
+            start();
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (!hasCameraPermission()) {
+            // No camera permission. Alert user.
+            AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+            builder.setTitle("No Camera permission")
+                .setMessage("Enable camera permission in settings to use the scanner.")
+                .setPositiveButton("Ok", null)
+                .show();
+        }
     }
 
     /**
      * Start the camera for the first time.
      */
     public void start() {
+        if (!hasCameraPermission())
+            return;
+
         createCameraSource();
         startCameraSource();
     }
@@ -93,7 +114,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      */
     public void resume() {
         // start the camera only if it isn't already running
-        if (mIsPaused) {
+        if (mIsPaused && hasCameraPermission()) {
             startCameraSource();
         }
     }
@@ -102,7 +123,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * Stops the camera.
      */
     public void pause() {
-        if (mPreview != null && !mIsPaused) {
+        if (mPreview != null && !mIsPaused && hasCameraPermission()) {
             mPreview.stop();
             mIsPaused = true;
         }
@@ -113,7 +134,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * rest of the processing pipeline.
      */
     public void release() {
-        if (mPreview != null) {
+        if (mPreview != null && hasCameraPermission()) {
             mPreview.release();
             mIsPaused = true;
         }
@@ -124,9 +145,11 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * @param barcodeTypes: desired types bitmask
      */
     public void setBarcodeTypes(int barcodeTypes) {
-        mBarcodeTypes = barcodeTypes;
+        if (mBarcodeTypes == barcodeTypes) {
+            return;
+        }
 
-        Log.d("BARCODETYPE", "Set to " + barcodeTypes);
+        mBarcodeTypes = barcodeTypes;
 
         if (mPreview != null && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             try {
@@ -135,6 +158,23 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Set focus mode.
+     * Possible values: 0 = continuous focus (if supported), 1 = tap-to-focus (if supported), 2 = fixed focus
+     * @param focusMode
+     */
+    public boolean setFocusMode(int focusMode) {
+        if (focusMode < 0 || focusMode > 2) {
+            focusMode = 0;
+        }
+
+        if (mCameraSource != null) {
+            return mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
+        }
+
+        return false;
     }
 
     @Override
@@ -154,10 +194,6 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      */
     @SuppressLint("InlinedApi")
     private void createCameraSource() {
-        // Check permission again and create the source if it wasn't created already
-        if (!hasCameraPermission())
-            return;
-
         // set preferred mBarcodeTypes before this :)
         BarcodeDetector barcodeDetector = createBarcodeDetector();
 
@@ -189,7 +225,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         // at long distances.
         mCameraSource = new CameraSource.Builder(mContext.getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-                .setRequestedPreviewSize(1600, 1024)
+                .setRequestedPreviewSize(1600, 900)
                 .setRequestedFps(15.0f)
                 .setPreferredFocusModes(PREFERRED_FOCUS_MODES)
                 .setFlashMode( /* //[CURRENTLY DON'T USE FLASH!]// useFlash ? Camera.Parameters.FLASH_MODE_TORCH : */ null)

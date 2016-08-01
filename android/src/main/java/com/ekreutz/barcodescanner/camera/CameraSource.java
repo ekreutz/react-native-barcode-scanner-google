@@ -570,6 +570,9 @@ public class CameraSource {
                     mFocusMode = mode;
                     return true;
                 }
+            } else if (mCamera == null) {
+                // camera hasn't been initialized yet. we'll set the preferred focus mode here!
+                mFocusMode = mode;
             }
 
             return false;

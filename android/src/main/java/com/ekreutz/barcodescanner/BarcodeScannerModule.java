@@ -2,8 +2,8 @@ package com.ekreutz.barcodescanner;
 
 import android.util.Log;
 
-import com.ekreutz.barcodescanner.ui.BarcodeFormat;
 import com.ekreutz.barcodescanner.ui.BarcodeScannerView;
+import com.ekreutz.barcodescanner.util.BarcodeFormat;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -47,6 +47,17 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
         return Collections.unmodifiableMap(new HashMap<String, Object>() {
             {
                 put("BarcodeType", BarcodeFormat.REVERSE_FORMATS);
+                put("FocusMode", getFocusModes());
+            }
+        });
+    }
+
+    private static Map<String, Integer> getFocusModes() {
+        return Collections.unmodifiableMap(new HashMap<String, Integer>() {
+            {
+                put("AUTO", 0);
+                put("TAP", 1);
+                put("FIXED", 2);
             }
         });
     }
@@ -87,19 +98,16 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
 
     @Override
     public void onHostResume() {
-        Log.d("LIFE", "Resuming.");
         resume();
     }
 
     @Override
     public void onHostPause() {
-        Log.d("LIFE", "Pause.");
         pause();
     }
 
     @Override
     public void onHostDestroy() {
-        Log.d("LIFE", "Destroy.");
         release();
     }
 

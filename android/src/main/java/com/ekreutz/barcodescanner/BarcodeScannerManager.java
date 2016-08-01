@@ -21,10 +21,6 @@ public class BarcodeScannerManager extends SimpleViewManager<BarcodeScannerView>
     @Override
     protected BarcodeScannerView createViewInstance(ThemedReactContext reactContext) {
         mBarcodeScannerView = new BarcodeScannerView(reactContext);
-
-        // start the camera stream and barcode decoding
-        mBarcodeScannerView.resume();
-
         return mBarcodeScannerView;
     }
 

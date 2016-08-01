@@ -26,6 +26,7 @@ import android.view.SurfaceView;
 import android.view.ViewGroup;
 
 import com.google.android.gms.common.images.Size;
+import com.google.android.gms.vision.Detector;
 
 import java.io.IOException;
 
@@ -79,9 +80,22 @@ public class CameraSourcePreview extends ViewGroup {
 
     @RequiresPermission(Manifest.permission.CAMERA)
     private void startIfReady() throws IOException, SecurityException {
-        if (mStartRequested && mSurfaceAvailable) {
+        if (mStartRequested && mSurfaceAvailable && mCameraSource != null) {
             mCameraSource.start(mSurfaceView.getHolder());
             mStartRequested = false;
+        }
+    }
+
+    // Can be quite heavy, since it stops and restarts the camera
+    @RequiresPermission(Manifest.permission.CAMERA)
+    public void replaceBarcodeDetector(Detector<?> detector, boolean shouldResume) throws IOException, SecurityException {
+        if (mCameraSource != null) {
+            mCameraSource.release();
+            mCameraSource.setDetector(detector);
+
+            if (shouldResume && mSurfaceAvailable) {
+                start(mCameraSource);
+            }
         }
     }
 
@@ -89,6 +103,7 @@ public class CameraSourcePreview extends ViewGroup {
         @Override
         public void surfaceCreated(SurfaceHolder surface) {
             mSurfaceAvailable = true;
+            Log.d("BARCODETYPE", "surface created");
             Log.d("LAYOUTING", "surface created");
             try {
                 startIfReady();
@@ -107,7 +122,8 @@ public class CameraSourcePreview extends ViewGroup {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            Log.d("LAYOUTING", "surface changed");
+            Log.d("BARCODETYPE", "surface changed");
+            Log.d("LAYOUTING", String.format("surface changed %d x %d", width, height));
             previewLayout();
         }
     }
@@ -119,8 +135,9 @@ public class CameraSourcePreview extends ViewGroup {
         mWidth = right - left;
         mHeight = bottom - top;
 
-        Log.d("LAYOUTING", "preview layout");
+        Log.d("LAYOUTING", String.format("onLayout %d x %d", mWidth, mHeight));
 
+        mCameraSource.setRotation();
         previewLayout();
     }
 
@@ -140,9 +157,12 @@ public class CameraSourcePreview extends ViewGroup {
 
         // Swap width and height sizes when in portrait, since it will be rotated 90 degrees
         if (isPortraitMode()) {
+            Log.d("LAYOUTING", "portrait");
             int tmp = previewWidth;
             previewWidth = previewHeight;
             previewHeight = tmp;
+        } else {
+            Log.d("LAYOUTING", "landscape");
         }
 
         fillLayout(mWidth, mHeight, previewWidth, previewHeight);
@@ -200,7 +220,7 @@ public class CameraSourcePreview extends ViewGroup {
         float childArea = (float) childHeight * childWidth;
 
 
-        Log.d(TAG, String.format("Layout: %d%% of preview was cropped.", (int)(paddingArea / childArea * 100)));
+        Log.d("LAYOUTING", String.format("Layout: %d%% of preview was cropped.", (int)(paddingArea / childArea * 100)));
 
         for (int i = 0; i < getChildCount(); ++i) {
             getChildAt(i).layout(-xPadding, -yPadding, childWidth - xPadding, childHeight - yPadding);

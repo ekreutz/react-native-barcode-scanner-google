@@ -47,6 +47,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private boolean mIsPaused = true;
+
     private int mBarcodeTypes = 0; // 0 for all supported types
 
     public BarcodeScannerView(Context context) {
@@ -67,42 +68,16 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         init();
     }
 
+    private boolean hasCameraPermission() {
+        int rc = ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA);
+        return rc == PackageManager.PERMISSION_GRANTED;
+    }
+
     private void init() {
         mPreview = new CameraSourcePreview(mContext, null);
         addView(mPreview);
 
-        // Check permission again and create the source if it wasn't created already
-        int rc = ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA);
-        if (rc == PackageManager.PERMISSION_GRANTED && mCameraSource == null) {
-            createCameraSource();
-        }
-    }
-
-    /**
-     * Starts or restarts the camera source, if it exists.  If the camera source doesn't exist yet
-     * (e.g., because onResume was called before the camera source was created), this will be called
-     * again when the camera source is created.
-     */
-    private void startCameraSource() throws SecurityException {
-        // check that the device has play services available.
-        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext.getApplicationContext());
-        if (code != ConnectionResult.SUCCESS) {
-            final Activity activity = Utils.scanForActivity(mContext);
-            Dialog dlg = GoogleApiAvailability.getInstance().getErrorDialog(activity, code, RC_HANDLE_GMS);
-            dlg.show();
-        }
-
-        if (mCameraSource != null) {
-            try {
-                mPreview.start(mCameraSource);
-                mIsPaused = false;
-            } catch (IOException e) {
-                mCameraSource.release();
-                mCameraSource = null;
-            }
-        } else {
-            Log.d(TAG, "Camera source is null!");
-        }
+        start();
     }
 
     /**
@@ -110,9 +85,10 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      */
     public void start() {
         createCameraSource();
+        startCameraSource();
     }
 
-     /**
+    /**
      * Restarts the camera.
      */
     public void resume() {
@@ -139,26 +115,26 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     public void release() {
         if (mPreview != null) {
             mPreview.release();
+            mIsPaused = true;
         }
     }
 
+    /**
+     * Note: restarts the camera, so can be slow.
+     * @param barcodeTypes: desired types bitmask
+     */
     public void setBarcodeTypes(int barcodeTypes) {
-        boolean hadSource = mCameraSource != null;
-
-        //if (hadSource) {
-        //    release();
-        //}
-
         mBarcodeTypes = barcodeTypes;
-        Log.d("BARCODETYPE", "Set to " + mBarcodeTypes);
-//
-        //if (hadSource) {
-        //    createCameraSource();
-//
-        //    if (!mIsPaused) {
-        //        resume();
-        //    }
-        //}
+
+        Log.d("BARCODETYPE", "Set to " + barcodeTypes);
+
+        if (mPreview != null && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                mPreview.replaceBarcodeDetector(createBarcodeDetector(), !mIsPaused);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -179,22 +155,11 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     @SuppressLint("InlinedApi")
     private void createCameraSource() {
         // Check permission again and create the source if it wasn't created already
-        int rc = ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA);
-        if (rc != PackageManager.PERMISSION_GRANTED) {
+        if (!hasCameraPermission())
             return;
-        }
 
-        // A barcode detector is created to track barcodes.  An associated multi-processor instance
-        // is set to receive the barcode detection results, and track the barcodes.
-        // The factory is used by the multi-processor to
-        // create a separate tracker instance for each barcode.
-        Log.d("BARCODETYPE", "Was " + mBarcodeTypes);
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(mContext)
-                .setBarcodeFormats(mBarcodeTypes)
-                .build();
-
-        barcodeDetector.setProcessor(new MultiProcessor.Builder<>(this).build());
-
+        // set preferred mBarcodeTypes before this :)
+        BarcodeDetector barcodeDetector = createBarcodeDetector();
 
         if (!barcodeDetector.isOperational()) {
             // Note: The first time that an app using the barcode or face API is installed on a
@@ -231,27 +196,46 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .build();
     }
 
-    @Override
-    public Tracker<Barcode> create(Barcode barcode) {
-        return new Tracker<Barcode>() {
-            /**
-             * Start tracking the detected item instance within the item overlay.
-             */
-            @Override
-            public void onNewItem(int id, Barcode item) {
-                // Act on new barcode found
-                WritableMap event = Arguments.createMap();
-                event.putString("data", item.displayValue);
-                event.putString("type", BarcodeFormat.get(item.format));
+    private BarcodeDetector createBarcodeDetector() {
+        // A barcode detector is created to track barcodes.  An associated multi-processor instance
+        // is set to receive the barcode detection results, and track the barcodes.
+        // The factory is used by the multi-processor to
+        // create a separate tracker instance for each barcode.
+        Log.d("BARCODETYPE", "Was " + mBarcodeTypes);
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(mContext)
+            .setBarcodeFormats(mBarcodeTypes)
+            .build();
 
-                // Send the newly found data to the JS side
-                ReactContext reactContext = (ReactContext) mContext;
-                reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
-                        getId(),
-                        "topChange",
-                        event);
+        barcodeDetector.setProcessor(new MultiProcessor.Builder<>(this).build());
+
+        return barcodeDetector;
+    }
+
+    /**
+     * Starts or restarts the camera source, if it exists.  If the camera source doesn't exist yet
+     * (e.g., because onResume was called before the camera source was created), this will be called
+     * again when the camera source is created.
+     */
+    private void startCameraSource() throws SecurityException {
+        // check that the device has play services available.
+        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext.getApplicationContext());
+        if (code != ConnectionResult.SUCCESS) {
+            final Activity activity = Utils.scanForActivity(mContext);
+            Dialog dlg = GoogleApiAvailability.getInstance().getErrorDialog(activity, code, RC_HANDLE_GMS);
+            dlg.show();
+        }
+
+        if (mCameraSource != null) {
+            try {
+                mPreview.start(mCameraSource);
+                mIsPaused = false;
+            } catch (IOException e) {
+                mCameraSource.release();
+                mCameraSource = null;
             }
-        };
+        } else {
+            Log.d(TAG, "Camera source is null!");
+        }
     }
 
     private void tryAutoFocus() {
@@ -274,5 +258,28 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     public void onAutoFocus(boolean success) {
         // No actions needed for the focus callback.
         Log.d(TAG, "Did autofocus.");
+    }
+
+    @Override
+    public Tracker<Barcode> create(Barcode barcode) {
+        return new Tracker<Barcode>() {
+            /**
+             * Start tracking the detected item instance within the item overlay.
+             */
+            @Override
+            public void onNewItem(int id, Barcode item) {
+                // Act on new barcode found
+                WritableMap event = Arguments.createMap();
+                event.putString("data", item.displayValue);
+                event.putString("type", BarcodeFormat.get(item.format));
+
+                // Send the newly found data to the JS side
+                ReactContext reactContext = (ReactContext) mContext;
+                reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                    getId(),
+                    "topChange",
+                    event);
+            }
+        };
     }
 }

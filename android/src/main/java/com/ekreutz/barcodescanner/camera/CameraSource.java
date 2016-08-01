@@ -101,7 +101,8 @@ public class CameraSource {
         Camera.Parameters.FOCUS_MODE_MACRO
     })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface FocusMode {}
+    private @interface FocusMode {
+    }
 
     @StringDef({
         Camera.Parameters.FLASH_MODE_ON,
@@ -111,7 +112,8 @@ public class CameraSource {
         Camera.Parameters.FLASH_MODE_TORCH
     })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface FlashMode {}
+    private @interface FlashMode {
+    }
 
     private Context mContext;
 
@@ -139,6 +141,7 @@ public class CameraSource {
 
     private String mFocusMode = null;
     private String mFlashMode = null;
+    private int mCameraId = -1;
 
     // Leave focus mode at null, and set this to have the camera select e good focus mode out of supported ones.
     // It will choose the first one that is supported
@@ -340,6 +343,15 @@ public class CameraSource {
         synchronized (mCameraLock) {
             return mCamera.getParameters();
         }
+    }
+
+    // Call release() before calling this
+    public void setDetector(Detector<?> detector) {
+        if (mFrameProcessor != null && mFrameProcessor.mActive) {
+            throw new RuntimeException("Can't replace detector while frame processor is active!");
+        }
+
+        this.mFrameProcessor = this.new FrameProcessingRunnable(detector);
     }
 
     /**
@@ -761,7 +773,9 @@ public class CameraSource {
         if (requestedCameraId == -1) {
             throw new RuntimeException("Could not find requested camera.");
         }
+
         Camera camera = Camera.open(requestedCameraId);
+        mCameraId = requestedCameraId;
 
         SizePair sizePair = selectSizePair(camera, mRequestedPreviewWidth, mRequestedPreviewHeight);
         if (sizePair == null) {
@@ -780,9 +794,7 @@ public class CameraSource {
 
         Camera.Parameters parameters = camera.getParameters();
 
-        if (pictureSize != null) {
-            parameters.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
-        }
+        parameters.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
 
         Log.d("PreviewSize", "Setting preview size.");
         Log.d("PreviewSize", String.format("Actual preview dims: %d x %d", mPreviewSize.getWidth(), mPreviewSize.getHeight()));
@@ -1022,6 +1034,7 @@ public class CameraSource {
                 (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         int degrees = 0;
         int rotation = windowManager.getDefaultDisplay().getRotation();
+
         switch (rotation) {
             case Surface.ROTATION_0:
                 degrees = 0;
@@ -1038,6 +1051,8 @@ public class CameraSource {
             default:
                 Log.e(TAG, "Bad rotation value: " + rotation);
         }
+
+        Log.d("LAYOUTING", "source rotation " + degrees);
 
         CameraInfo cameraInfo = new CameraInfo();
         Camera.getCameraInfo(cameraId, cameraInfo);
@@ -1057,6 +1072,12 @@ public class CameraSource {
 
         camera.setDisplayOrientation(displayAngle);
         parameters.setRotation(angle);
+    }
+
+    public void setRotation() {
+        if (mCamera != null && mCameraId >= 0) {
+            setRotation(mCamera, mCamera.getParameters(), mCameraId);
+        }
     }
 
     /**

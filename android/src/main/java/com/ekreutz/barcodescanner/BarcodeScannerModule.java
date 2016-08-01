@@ -1,5 +1,7 @@
 package com.ekreutz.barcodescanner;
 
+import android.util.Log;
+
 import com.ekreutz.barcodescanner.ui.BarcodeFormat;
 import com.ekreutz.barcodescanner.ui.BarcodeScannerView;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -26,6 +28,8 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
 
     public BarcodeScannerModule(ReactApplicationContext reactContext, BarcodeScannerManager barcodeScannerManager) {
         super(reactContext);
+
+        reactContext.addLifecycleEventListener(this);
         mBarcodeScannerManager = barcodeScannerManager;
     }
 
@@ -52,11 +56,21 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
      * ---------------------------------------------- */
 
     @ReactMethod
+    public void start(Promise promise) {
+        Log.d("BARCODETYPE", "Calling start.");
+
+        if (start())
+            promise.resolve(null);
+        else
+            promise.reject("1", "Start: Scanner view was null...");
+    }
+
+    @ReactMethod
     public void resume(Promise promise) {
         if (resume())
             promise.resolve(null);
         else
-            promise.reject("1", "Resume: Scanner view was null...");
+            promise.reject("2", "Resume: Scanner view was null...");
     }
 
     @ReactMethod
@@ -64,7 +78,7 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
         if (pause())
             promise.resolve(null);
         else
-            promise.reject("2", "Pause: Scanner view was null...");
+            promise.reject("3", "Pause: Scanner view was null...");
     }
 
     /* ----------------------------------------------
@@ -73,16 +87,19 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
 
     @Override
     public void onHostResume() {
+        Log.d("LIFE", "Resuming.");
         resume();
     }
 
     @Override
     public void onHostPause() {
+        Log.d("LIFE", "Pause.");
         pause();
     }
 
     @Override
     public void onHostDestroy() {
+        Log.d("LIFE", "Destroy.");
         release();
     }
 
@@ -90,6 +107,16 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
     /* ----------------------------------------------
      * ------------- Utility methods ----------------
      * ---------------------------------------------- */
+
+    private boolean start() {
+        BarcodeScannerView view = mBarcodeScannerManager.getBarcodeScannerView();
+
+        if (view != null) {
+            view.start();
+        }
+
+        return view != null;
+    }
 
     private boolean resume() {
         BarcodeScannerView view = mBarcodeScannerManager.getBarcodeScannerView();

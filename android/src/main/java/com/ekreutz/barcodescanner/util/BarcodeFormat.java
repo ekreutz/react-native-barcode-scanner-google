@@ -1,4 +1,4 @@
-package com.ekreutz.barcodescanner.ui;
+package com.ekreutz.barcodescanner.util;
 
 import com.google.android.gms.vision.barcode.Barcode;
 

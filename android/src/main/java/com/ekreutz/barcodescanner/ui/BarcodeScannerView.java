@@ -2,8 +2,6 @@ package com.ekreutz.barcodescanner.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -15,12 +13,10 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.ekreutz.barcodescanner.camera.CameraSource;
 import com.ekreutz.barcodescanner.camera.CameraSourcePreview;
 import com.ekreutz.barcodescanner.util.BarcodeFormat;
-import com.ekreutz.barcodescanner.util.Utils;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
@@ -39,6 +35,11 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     private final static String TAG = "BARCODE_CAPTURE_VIEW";
     private final Context mContext;
 
+    private static final String BARCODE_FOUND_KEY = "barcode_found";
+    private static final String LOW_STORAGE_KEY = "low_storage";
+    private static final String NOT_YET_OPERATIONAL = "not_yet_operational";
+    private static final String NO_PLAY_SERVICES_KEY = "no_play_services";
+
     // intent request code to handle updating play services if needed.
     private static final int RC_HANDLE_GMS = 9001;
 
@@ -48,6 +49,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
+    private BarcodeDetector mBarcodeDetector;
     private boolean mIsPaused = true;
 
     private int mBarcodeTypes = 0; // 0 for all supported types
@@ -95,6 +97,32 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .setMessage("Enable camera permission in settings to use the scanner.")
                 .setPositiveButton("Ok", null)
                 .show();
+        }
+
+        if (mBarcodeDetector != null && !mBarcodeDetector.isOperational()) {
+            // Note: The first time that an app using the barcode or face API is installed on a
+            // device, GMS will download a native libraries to the device in order to do detection.
+            // Usually this completes before the app is run for the first time.  But if that
+            // download has not yet completed, then the above call will not detect any barcodes
+            // and/or faces.
+            //
+            // isOperational() can be used to check if the required native libraries are currently
+            // available.  The detectors will automatically become operational once the library
+            // downloads complete on device.
+            Log.w(TAG, "Detector dependencies are not yet available.");
+
+            // Check for low storage.  If there is low storage, the native library will not be
+            // downloaded, so detection will not become operational.
+            IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
+            boolean hasLowStorage = mContext.registerReceiver(null, lowstorageFilter) != null;
+
+            if (hasLowStorage) {
+                // Detector dependencies can't be downloaded due to low storage
+                sendNativeEvent(LOW_STORAGE_KEY, Arguments.createMap());
+            } else {
+                // Storage isn't low, but dependencies haven't been downloaded yet
+                sendNativeEvent(NOT_YET_OPERATIONAL, Arguments.createMap());
+            }
         }
     }
 
@@ -170,11 +198,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
             focusMode = 0;
         }
 
-        if (mCameraSource != null) {
-            return mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
-        }
-
-        return false;
+        return mCameraSource != null && mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
     }
 
     @Override
@@ -198,26 +222,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         BarcodeDetector barcodeDetector = createBarcodeDetector();
 
         if (!barcodeDetector.isOperational()) {
-            // Note: The first time that an app using the barcode or face API is installed on a
-            // device, GMS will download a native libraries to the device in order to do detection.
-            // Usually this completes before the app is run for the first time.  But if that
-            // download has not yet completed, then the above call will not detect any barcodes
-            // and/or faces.
-            //
-            // isOperational() can be used to check if the required native libraries are currently
-            // available.  The detectors will automatically become operational once the library
-            // downloads complete on device.
-            Log.w(TAG, "Detector dependencies are not yet available.");
-
-            // Check for low storage.  If there is low storage, the native library will not be
-            // downloaded, so detection will not become operational.
-            IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
-            boolean hasLowStorage = mContext.registerReceiver(null, lowstorageFilter) != null;
-
-            if (hasLowStorage) {
-                Toast.makeText(mContext, "Low storage!" /* TODO: replace with proper string handling */, Toast.LENGTH_LONG).show();
-                Log.w(TAG, "Low storage!");
-            }
+            return;
         }
 
         // Creates and starts the camera.  Note that this uses a higher resolution in comparison
@@ -228,7 +233,6 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .setRequestedPreviewSize(1600, 900)
                 .setRequestedFps(15.0f)
                 .setPreferredFocusModes(PREFERRED_FOCUS_MODES)
-                .setFlashMode( /* //[CURRENTLY DON'T USE FLASH!]// useFlash ? Camera.Parameters.FLASH_MODE_TORCH : */ null)
                 .build();
     }
 
@@ -237,14 +241,13 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         // is set to receive the barcode detection results, and track the barcodes.
         // The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        Log.d("BARCODETYPE", "Was " + mBarcodeTypes);
         BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(mContext)
             .setBarcodeFormats(mBarcodeTypes)
             .build();
 
         barcodeDetector.setProcessor(new MultiProcessor.Builder<>(this).build());
 
-        return barcodeDetector;
+        return mBarcodeDetector = barcodeDetector;
     }
 
     /**
@@ -256,9 +259,8 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         // check that the device has play services available.
         int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext.getApplicationContext());
         if (code != ConnectionResult.SUCCESS) {
-            final Activity activity = Utils.scanForActivity(mContext);
-            Dialog dlg = GoogleApiAvailability.getInstance().getErrorDialog(activity, code, RC_HANDLE_GMS);
-            dlg.show();
+            sendNativeEvent(NO_PLAY_SERVICES_KEY, Arguments.createMap());
+            return;
         }
 
         if (mCameraSource != null) {
@@ -309,13 +311,24 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 event.putString("data", item.displayValue);
                 event.putString("type", BarcodeFormat.get(item.format));
 
-                // Send the newly found data to the JS side
-                ReactContext reactContext = (ReactContext) mContext;
-                reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
-                    getId(),
-                    "topChange",
-                    event);
+                sendNativeEvent(BARCODE_FOUND_KEY, event);
             }
         };
+    }
+
+    private void sendNativeEvent(String key, WritableMap event) {
+        if (getId() < 0) {
+            Log.w(TAG, "Tried to send native event with negative id!");
+            return;
+        }
+
+        event.putString("key", key);
+
+        // Send the newly found data to the JS side
+        ReactContext reactContext = (ReactContext) mContext;
+        reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+            getId(),
+            "topChange",
+            event);
     }
 }

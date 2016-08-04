@@ -1,3 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.ekreutz.barcodescanner">
     <uses-permission android:name="android.permission.CAMERA" />
+    <application>
+        <meta-data
+            android:name="com.google.android.gms.vision.DEPENDENCIES"
+            android:value="barcode" />
+    </application>
 </manifest>

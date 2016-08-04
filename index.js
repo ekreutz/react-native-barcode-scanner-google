@@ -18,6 +18,14 @@ class BarcodeScanner extends Component {
     ...View.propTypes
   };
 
+  componentWillMount() {
+    resumeScanner();
+  }
+
+  componentWillUnmount() {
+    pauseScanner();
+  }
+
   _onChange(event: Event) {
     switch (event.nativeEvent.key) {
       case BARCODE_FOUND_KEY:

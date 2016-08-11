@@ -69,6 +69,7 @@ Use `import { Exception } from 'react-native-barcode-scanner-google';` to import
 
 Possible values for the parameter `key` are:
 
+- `Exception.NO_PLAY_SERVICES`: Occurs when the user doesn't have the latest version of Google Play Services. If this is the case, ask the user to update Play Services.
 - `Exception.LOW_STORAGE`: Occurs when the native setup couldn't be completed because the user's device had low storage.
 - `Exception.NOT_OPERATIONAL`: Occurs when the user did have enough storage, but opened the app before downloads where completed. Encourage the user to wait a bit or turn on their internet if this happens.
 

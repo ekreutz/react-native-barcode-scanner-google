@@ -34,6 +34,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
 
     private final static String TAG = "BARCODE_CAPTURE_VIEW";
     private final Context mContext;
+    private boolean hasAllCapabilities = false; // barcode scanner library and newest play services
 
     private static final String BARCODE_FOUND_KEY = "barcode_found";
     private static final String LOW_STORAGE_KEY = "low_storage";
@@ -77,13 +78,15 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         return rc == PackageManager.PERMISSION_GRANTED;
     }
 
-    public void init() {
-        if (hasCameraPermission()) {
-            mPreview = new CameraSourcePreview(mContext, null);
-            addView(mPreview);
+    private boolean hasNecessaryCapabilities() {
+        return hasCameraPermission() && hasAllCapabilities;
+    }
 
-            start();
-        }
+    public void init() {
+        mPreview = new CameraSourcePreview(mContext, null);
+        addView(mPreview);
+
+        start();
     }
 
     @Override
@@ -97,9 +100,25 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .setMessage("Enable camera permission in settings to use the scanner.")
                 .setPositiveButton("Ok", null)
                 .show();
+
+            return;
         }
 
-        if (mBarcodeDetector != null && !mBarcodeDetector.isOperational()) {
+        /**
+         * Check for a few other things that the device needs for the scanner to work.
+         * And send a JS event if something goes wrongs.
+         *
+         * Checklist: (things are checked in this order)
+         * 1. The device has the latest play services
+         * 2. The device has sufficient storage
+         * 3. The scanner dependencies are downloaded
+         */
+
+        // check that the device has (the latest) play services available.
+        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext.getApplicationContext());
+        if (code != ConnectionResult.SUCCESS) {
+            sendNativeEvent(NO_PLAY_SERVICES_KEY, Arguments.createMap());
+        } else if (mBarcodeDetector != null && !mBarcodeDetector.isOperational()) {
             // Note: The first time that an app using the barcode or face API is installed on a
             // device, GMS will download a native libraries to the device in order to do detection.
             // Usually this completes before the app is run for the first time.  But if that
@@ -123,6 +142,9 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 // Storage isn't low, but dependencies haven't been downloaded yet
                 sendNativeEvent(NOT_YET_OPERATIONAL, Arguments.createMap());
             }
+        } else {
+            hasAllCapabilities = true;
+            start();
         }
     }
 
@@ -130,7 +152,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * Start the camera for the first time.
      */
     public void start() {
-        if (!hasCameraPermission())
+        if (!hasNecessaryCapabilities())
             return;
 
         createCameraSource();
@@ -142,7 +164,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      */
     public void resume() {
         // start the camera only if it isn't already running
-        if (mIsPaused && hasCameraPermission()) {
+        if (mIsPaused && hasNecessaryCapabilities()) {
             startCameraSource();
         }
     }
@@ -151,7 +173,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * Stops the camera.
      */
     public void pause() {
-        if (mPreview != null && !mIsPaused && hasCameraPermission()) {
+        if (mPreview != null && !mIsPaused && hasNecessaryCapabilities()) {
             mPreview.stop();
             mIsPaused = true;
         }
@@ -162,7 +184,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * rest of the processing pipeline.
      */
     public void release() {
-        if (mPreview != null && hasCameraPermission()) {
+        if (mPreview != null && hasNecessaryCapabilities()) {
             mPreview.release();
             mIsPaused = true;
         }
@@ -221,7 +243,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         // set preferred mBarcodeTypes before this :)
         BarcodeDetector barcodeDetector = createBarcodeDetector();
 
-        if (!barcodeDetector.isOperational()) {
+        if (!hasNecessaryCapabilities()) {
             return;
         }
 
@@ -256,13 +278,6 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
      * again when the camera source is created.
      */
     private void startCameraSource() throws SecurityException {
-        // check that the device has play services available.
-        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext.getApplicationContext());
-        if (code != ConnectionResult.SUCCESS) {
-            sendNativeEvent(NO_PLAY_SERVICES_KEY, Arguments.createMap());
-            return;
-        }
-
         if (mCameraSource != null) {
             try {
                 mPreview.start(mCameraSource);

@@ -6,6 +6,7 @@ const scannerModule = NativeModules['BarcodeScannerModule'];
 const BARCODE_FOUND_KEY = "barcode_found";
 const LOW_STORAGE_EXCEPTION = "low_storage";
 const NOT_YET_OPERATIONAL_EXCEPTION = "not_yet_operational";
+const NO_PLAY_SERVICES_EXCEPTION = 'no_play_services';
 
 class BarcodeScanner extends Component {
   static propTypes = {
@@ -39,6 +40,7 @@ class BarcodeScanner extends Component {
         break;
       case NOT_YET_OPERATIONAL_EXCEPTION:
       case LOW_STORAGE_EXCEPTION:
+      case NO_PLAY_SERVICES_EXCEPTION:
         if (this.props.onException) this.props.onException(event.nativeEvent.key);
         break;
     }
@@ -70,7 +72,7 @@ export const BarcodeType = scannerModule.BarcodeType;
 // Alternatives: AUTO, TAP, FIXED. Note: focusMode TAP won't work if you place a view on top of BarcodeScanner, that catches all touch events.
 export const FocusMode = scannerModule.FocusMode;
 
-export const Exception = { LOW_STORAGE: LOW_STORAGE_EXCEPTION, NOT_OPERATIONAL: NOT_YET_OPERATIONAL_EXCEPTION };
+export const Exception = { LOW_STORAGE: LOW_STORAGE_EXCEPTION, NOT_OPERATIONAL: NOT_YET_OPERATIONAL_EXCEPTION, NO_PLAY_SERVICES: NO_PLAY_SERVICES_EXCEPTION };
 
 
 export const pauseScanner = scannerModule.pause;

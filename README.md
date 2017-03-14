@@ -61,7 +61,7 @@ AppRegistry.registerComponent('BarcodeApp', () => BarcodeApp);
 
 Note: even though they're not used in this example, notice how we import the functions `pauseScanner` and `resumeScanner`. These can be used in complex UIs to start or stop the camera stream to the scanner. Read more about how they work in _Properties_ down below.
 
-```
+```js
 import React, { Component } from 'react';
 import { AppRegistry, StyleSheet, Text, View, Alert } from 'react-native';
 

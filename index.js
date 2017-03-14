@@ -20,11 +20,25 @@ class BarcodeScanner extends Component {
   };
 
   componentWillMount() {
-    resumeScanner();
+    resumeScanner()
+      .then(() => {
+        console.log("BarcodeScanner was resumed on component mount.");
+      })
+      .catch(e => {
+        // In regular usage this 'exception' is harmless, so we just log it instead of warning the user (dev).
+        console.log(e);
+      });
   }
 
   componentWillUnmount() {
-    pauseScanner();
+    pauseScanner()
+      .then(() => {
+        console.log("BarcodeScanner was paused on component mount.");
+      })
+      .catch(e => {
+        // In regular usage this 'exception' is harmless, so we just log it instead of warning the user (dev).
+        console.log(e);
+      });
   }
 
   _onChange(event: Event) {
@@ -74,7 +88,7 @@ export const FocusMode = scannerModule.FocusMode;
 
 export const Exception = { LOW_STORAGE: LOW_STORAGE_EXCEPTION, NOT_OPERATIONAL: NOT_YET_OPERATIONAL_EXCEPTION, NO_PLAY_SERVICES: NO_PLAY_SERVICES_EXCEPTION };
 
-
+// Methods that the user (dev) might access to pause/resume the scanner at will
 export const pauseScanner = scannerModule.pause;
 export const resumeScanner = scannerModule.resume;
 

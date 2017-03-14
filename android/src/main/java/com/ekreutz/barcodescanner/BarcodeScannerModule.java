@@ -67,21 +67,11 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
      * ---------------------------------------------- */
 
     @ReactMethod
-    public void start(Promise promise) {
-        Log.d("BARCODETYPE", "Calling start.");
-
-        if (start())
-            promise.resolve(null);
-        else
-            promise.reject("1", "Start: Scanner view was null...");
-    }
-
-    @ReactMethod
     public void resume(Promise promise) {
         if (resume())
             promise.resolve(null);
         else
-            promise.reject("2", "Resume: Scanner view was null...");
+            promise.reject("2", "Attempted to RESUME barcode scanner before scanner view was instantiated.");
     }
 
     @ReactMethod
@@ -89,7 +79,7 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
         if (pause())
             promise.resolve(null);
         else
-            promise.reject("3", "Pause: Scanner view was null...");
+            promise.reject("3", "Attempted to PAUSE barcode scanner before scanner view was instantiated.");
     }
 
     /* ----------------------------------------------

@@ -1,7 +1,7 @@
 # react-native-barcode-scanner-google
 
 
-Barcode scanner view for React Native applications. Only for Android. Use something like `react-native-camera` for iOS.
+Very fast barcode scanner view for React Native applications. Only for Android. Use something like `react-native-camera` for iOS.
 The postfix `-google` is added since the native implementation is based on Google's Barcode API:
 https://developers.google.com/vision/barcodes-overview
 
@@ -10,6 +10,96 @@ Compared to other barcode scanners for Android that don't rely on Google's Barco
   - Faster
   - More accurate
   - More convenient (supports scanning in any direction)
+
+
+## Instructions
+
+To include `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
+
+1. 
+```
+npm install react-native-barcode-scanner-google@https://github.com/ekreutz/react-native-barcode-scanner-google.git --save
+```
+2. 
+```
+react-native link react-native-barcode-scanner-google
+```
+
+
+## Simple usage example
+
+Example `index.android.js` of an app named BarcodeApp.
+
+```js
+import React, { Component } from 'react';
+import { AppRegistry, StyleSheet, Text, View, Alert } from 'react-native';
+import BarcodeScanner from 'react-native-barcode-scanner-google';
+
+
+export default class BarcodeApp extends Component {
+  render() {
+    return (
+      <View style={{flex: 1}}>
+          <BarcodeScanner
+              style={{flex: 1}}
+              onBarcodeRead={({data, type}) => {
+                  // handle your scanned barcodes here!
+                  // as an example, we show an alert:
+                  Alert.alert(`Barcode '${data}' of type '${type}' was scanned.`);
+              }}
+          />
+      </View>
+    );
+  }
+}
+
+AppRegistry.registerComponent('BarcodeApp', () => BarcodeApp);
+```
+
+
+## Advanced usage example (all properties used)
+
+Note: even though they're not used in this example, notice how we import the functions `pauseScanner` and `resumeScanner`. These can be used in complex UIs to start or stop the camera stream to the scanner. Read more about how they work in _Properties_ down below.
+
+```
+import React, { Component } from 'react';
+import { AppRegistry, StyleSheet, Text, View, Alert } from 'react-native';
+
+import BarcodeScanner, { Exception, FocusMode, BarcodeType, pauseScanner, resumeScanner } from 'react-native-barcode-scanner-google';
+
+export default class BarcodeApp extends Component {
+  render() {
+    return (
+      <View style={{flex: 1}}>
+          <BarcodeScanner
+              style={{flex: 1}}
+              onBarcodeRead={({data, type}) => {
+                  // handle your scanned barcodes here!
+                  // as an example, we show an alert:
+                  Alert.alert(`Barcode '${data}' of type '${type}' was scanned.`);
+              }}
+              onException={exceptionKey => {
+                  // check instructions on Github for a more detailed overview of these exceptions.
+                  switch (exceptionKey) {
+                      case Exception.NO_PLAY_SERVICES:
+                          // tell the user they need to update Google Play Services
+                      case Exception.LOW_STORAGE:
+                          // tell the user their device doesn't have enough storage to fit the barcode scanning magic
+                      case Exception.NOT_OPERATIONAL:
+                          // Google's barcode magic is being downloaded, but is not yet operational.
+                      default: break;
+                  }
+              }}
+              focusMode={FocusMode.AUTO /* could also be TAP or FIXED */}
+              barcodeType={BarcodeType.CODE_128 | BarcodeType.EAN_13 | BarcodeType.EAN_8 /* replace with ALL for all alternatives */}
+          />
+      </View>
+    );
+  }
+}
+
+AppRegistry.registerComponent('BarcodeApp', () => BarcodeApp);
+```
 
 
 ## Properties
@@ -74,3 +164,31 @@ Possible values for the parameter `key` are:
 - `Exception.NOT_OPERATIONAL`: Occurs when the user did have enough storage, but opened the app before downloads where completed. Encourage the user to wait a bit or turn on their internet if this happens.
 
 If any of the above events occur, the scanner will default to show a black screen instead of the camera preview.
+
+
+___
+
+#### Utility functions `resumeScanner` and `pauseScanner`: function()
+
+Methods that can be used to pause/resume the camera stream of the barcode scanner JS-side. Most often you will not need these at all! They're meant to give advanced users more control over the scanner view.
+Use `import { resumeScanner, pauseScanner } from 'react-native-barcode-scanner-google';` to import these utility functions.
+
+Both methods return a `Promise` object and are used similarly. Example usage of `resumeScanner`:
+
+```js
+    resumeScanner()
+      .then(() => {
+        // do something after the scanner (camera) stream was resumed.
+      })
+      .catch(e => {
+        // Print error if scanner stream could not be resumed.
+        console.log(e);
+      });
+```
+
+
+___
+
+## License
+
+[MIT License](LICENSE)

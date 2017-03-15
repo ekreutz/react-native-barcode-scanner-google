@@ -14,11 +14,11 @@ Compared to other barcode scanners for Android that don't rely on Google's Barco
 
 ## Instructions
 
-To include `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
+To include the latest version (1.2.0) `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
 
 1. 
 ```
-npm install react-native-barcode-scanner-google@https://github.com/ekreutz/react-native-barcode-scanner-google.git --save
+npm install git+https://github.com/ekreutz/react-native-barcode-scanner-google.git#v1.2.0 --save
 ```
 2. 
 ```
@@ -161,7 +161,7 @@ Possible values for the parameter `key` are:
 
 - `Exception.NO_PLAY_SERVICES`: Occurs when the user doesn't have the latest version of Google Play Services. If this is the case, ask the user to update Play Services.
 - `Exception.LOW_STORAGE`: Occurs when the native setup couldn't be completed because the user's device had low storage.
-- `Exception.NOT_OPERATIONAL`: Occurs when the user did have enough storage, but opened the app before downloads where completed. Encourage the user to wait a bit or turn on their internet if this happens.
+- `Exception.NOT_OPERATIONAL`: Occurs when the user did have enough storage, but opened the app before downloads were completed. Encourage the user to wait a bit or turn on their internet if this happens.
 
 If any of the above events occur, the scanner will default to show a black screen instead of the camera preview.
 

@@ -188,6 +188,9 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
             mPreview.release();
             mIsPaused = true;
         }
+        if(mCameraSource != null) {
+            mCameraSource.release();
+        }
     }
 
     /**

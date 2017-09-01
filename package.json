@@ -1,6 +1,6 @@
 {
   "name": "react-native-barcode-scanner-google",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Barcode scanner for react native, which implements barcode detection from Google's Barcode API.",
   "main": "index.js",
   "author": "Emil Kreutzman",

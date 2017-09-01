@@ -14,11 +14,11 @@ Compared to other barcode scanners for Android that don't rely on Google's Barco
 
 ## Instructions
 
-To include the latest version (1.2.0) `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
+To include the latest version (1.3.0) `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
 
 1. 
 ```
-npm install git+https://github.com/ekreutz/react-native-barcode-scanner-google.git#v1.2.0 --save
+npm install git+https://github.com/ekreutz/react-native-barcode-scanner-google.git#v1.3.0 --save
 ```
 2. 
 ```
@@ -65,7 +65,7 @@ Note: even though they're not used in this example, notice how we import the fun
 import React, { Component } from 'react';
 import { AppRegistry, StyleSheet, Text, View, Alert } from 'react-native';
 
-import BarcodeScanner, { Exception, FocusMode, BarcodeType, pauseScanner, resumeScanner } from 'react-native-barcode-scanner-google';
+import BarcodeScanner, { Exception, FocusMode, BarcodeType, PrecisionMode, TorchMode, pauseScanner, resumeScanner } from 'react-native-barcode-scanner-google';
 
 export default class BarcodeApp extends Component {
   render() {
@@ -92,6 +92,8 @@ export default class BarcodeApp extends Component {
               }}
               focusMode={FocusMode.AUTO /* could also be TAP or FIXED */}
               barcodeType={BarcodeType.CODE_128 | BarcodeType.EAN_13 | BarcodeType.EAN_8 /* replace with ALL for all alternatives */}
+              torchMode={TorchMode.ON /* could be the default OFF */ }
+              precisionMode={PrecisionMode.RESPONSIVE /* could be the default PRECISE */ }
           />
       </View>
     );
@@ -137,6 +139,27 @@ Possible values for this prop are:
 - `FocusMode.FIXED`: Fixed focus
 
 ___
+
+#### `precisionMode`
+
+Use `import { PrecisionMode } from 'react-native-barcode-scanner-google';` to import the `PrecisionMode` object.
+
+Possible values for this prop are:
+- `PrecisionMode.PRECISE`: Scans on higher resolution but displays preview at 15 FPS. (default)
+- `PrecisionMode.RESPONSIVE`: Scans on lower resolution but displays preview at 30 FPS giving the more responsive feel.
+
+___
+
+#### `torchMode`
+
+Use `import { TorchMode } from 'react-native-barcode-scanner-google';` to import the `TorchMode` object.
+
+Possible values for this prop are:
+- `TorchMode.OFF`: Disables flashlight. (default)
+- `TorchMode.ON`: Enables flashlight.
+
+___
+
 
 #### `onBarcodeRead()`: function(obj: Object)
 

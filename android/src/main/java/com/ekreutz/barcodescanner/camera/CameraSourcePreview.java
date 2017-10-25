@@ -67,7 +67,6 @@ public class CameraSourcePreview extends ViewGroup {
     public void stop() {
         if (mCameraSource != null) {
             mCameraSource.stop();
-
         }
     }
 
@@ -154,8 +153,7 @@ public class CameraSourcePreview extends ViewGroup {
             previewWidth = previewHeight;
             previewHeight = tmp;
         }
-
-        fillLayout(mWidth, mHeight, previewWidth, previewHeight);
+        fitLayout(mWidth, mHeight, previewWidth, previewHeight);
 
         try {
             startIfReady();

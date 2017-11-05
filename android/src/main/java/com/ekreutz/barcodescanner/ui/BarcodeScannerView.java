@@ -226,7 +226,8 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         for (int i = 0, len = getChildCount(); i < len; i++) {
-            getChildAt(i).layout(l, t, r, b);
+            // tell the child to fill the whole view when layouting
+            getChildAt(i).layout(0, 0, r - l, b - t);
         }
     }
 

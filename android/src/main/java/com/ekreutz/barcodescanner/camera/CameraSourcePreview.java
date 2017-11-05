@@ -33,11 +33,16 @@ import java.io.IOException;
 public class CameraSourcePreview extends ViewGroup {
     private static final String TAG = "CameraSourcePreview";
 
+    private static final int FILL_MODE_COVER = 0;
+    private static final int FILL_MODE_FIT = 1;
+
     private Context mContext;
     private SurfaceView mSurfaceView;
     private boolean mStartRequested;
     private boolean mSurfaceAvailable;
     private CameraSource mCameraSource;
+    private int mWidth = 0, mHeight = 0;
+    private int fillMode = FILL_MODE_FIT;
 
     public CameraSourcePreview(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -123,13 +128,10 @@ public class CameraSourcePreview extends ViewGroup {
         }
     }
 
-    private int mWidth = 0, mHeight = 0;
-
     @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        mWidth = right - left;
-        mHeight = bottom - top;
-
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        mWidth = r - l;
+        mHeight = b - t;
         previewLayout();
     }
 
@@ -155,7 +157,22 @@ public class CameraSourcePreview extends ViewGroup {
             previewHeight = tmp;
         }
 
-        fillLayout(mWidth, mHeight, previewWidth, previewHeight);
+        double scaleRatio = 1.0;
+
+        if (fillMode == FILL_MODE_COVER) {
+            scaleRatio = Math.max(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
+        } else if (fillMode == FILL_MODE_FIT) {
+            scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
+        }
+
+        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2);
+        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2);
+        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2);
+        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2);
+
+        for (int i = 0; i < getChildCount(); ++i) {
+            getChildAt(i).layout(childLeft, childTop, childRight, childBottom);
+        }
 
         try {
             startIfReady();
@@ -163,56 +180,6 @@ public class CameraSourcePreview extends ViewGroup {
             Log.e(TAG,"Do not have permission to start the camera", se);
         } catch (IOException e) {
             Log.e(TAG, "Could not start camera source.", e);
-        }
-    }
-
-    /* Fit the child inside of this preview */
-    private void fitLayout(final int layoutWidth, final int layoutHeight, int width, int height) {
-        // Computes height and width for potentially doing fit width.
-        int childWidth = layoutWidth;
-        int childHeight = (int)(((float) layoutWidth / (float) width) * height);
-
-        // If height is too tall using fit width, does fit height instead.
-        if (childHeight > layoutHeight) {
-            childHeight = layoutHeight;
-            childWidth = (int)(((float) layoutHeight / (float) height) * width);
-        }
-
-        for (int i = 0; i < getChildCount(); ++i) {
-            getChildAt(i).layout(0, 0, childWidth, childHeight);
-        }
-    }
-
-    /* Make the child fill the whole preview area, at the cost of a little cropping (possibly) */
-    private void fillLayout(final int layoutWidth, final int layoutHeight, int width, int height) {
-        int childWidth;
-        int childHeight;
-        int xPadding = 0;
-        int yPadding = 0;
-        float widthRatio = (float) layoutWidth / (float) width;
-        float heightRatio = (float) layoutHeight / (float) height;
-
-        // To fill the view with the camera preview, while also preserving the correct aspect ratio,
-        // it is usually necessary to slightly oversize the child and to crop off portions along one
-        // of the dimensions.  We scale up based on the dimension requiring the most correction, and
-        // compute a crop offset for the other dimension.
-        if (widthRatio > heightRatio) {
-            childWidth = layoutWidth;
-            childHeight = (int) ((float) height * widthRatio);
-            yPadding = (childHeight - layoutHeight) / 2;
-        } else {
-            childWidth = (int) ((float) width * heightRatio);
-            childHeight = layoutHeight;
-            xPadding = (childWidth - layoutWidth) / 2;
-        }
-
-        float paddingArea = (float) xPadding * 2 * childHeight + yPadding * 2 * childWidth;
-        float childArea = (float) childHeight * childWidth;
-
-        Log.d(TAG, String.format("Layout: %d%% of preview was cropped.", (int)(paddingArea / childArea * 100)));
-
-        for (int i = 0; i < getChildCount(); ++i) {
-            getChildAt(i).layout(-xPadding, -yPadding, childWidth - xPadding, childHeight - yPadding);
         }
     }
 

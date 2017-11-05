@@ -65,7 +65,7 @@ Note: even though they're not used in this example, notice how we import the fun
 import React, { Component } from 'react';
 import { AppRegistry, StyleSheet, Text, View, Alert } from 'react-native';
 
-import BarcodeScanner, { Exception, FocusMode, BarcodeType, pauseScanner, resumeScanner } from 'react-native-barcode-scanner-google';
+import BarcodeScanner, { Exception, FocusMode, CameraFillMode, BarcodeType, pauseScanner, resumeScanner } from 'react-native-barcode-scanner-google';
 
 export default class BarcodeApp extends Component {
   render() {
@@ -91,6 +91,7 @@ export default class BarcodeApp extends Component {
                   }
               }}
               focusMode={FocusMode.AUTO /* could also be TAP or FIXED */}
+              cameraFillMode={CameraFillMode.COVER /* could also be FIT */}
               barcodeType={BarcodeType.CODE_128 | BarcodeType.EAN_13 | BarcodeType.EAN_8 /* replace with ALL for all alternatives */}
           />
       </View>
@@ -135,6 +136,16 @@ Possible values for this prop are:
 - `FocusMode.AUTO`: Continuous automatic focus. (default)
 - `FocusMode.TAP`: Tap-to-focus
 - `FocusMode.FIXED`: Fixed focus
+
+___
+
+#### `cameraFillMode`
+
+Use `import { CameraFillMode } from 'react-native-barcode-scanner-google';` to import the `CameraFillMode` object.
+
+Possible values for this prop are:
+- `CameraFillMode.COVER`: Make the camera stream fill the entire view, possibly cropping out a little bit on some side. (default)
+- `CameraFillMode.FIT`: Make the camera stream fit snugly inside the view, possibly showing wide bars on some side.
 
 ___
 

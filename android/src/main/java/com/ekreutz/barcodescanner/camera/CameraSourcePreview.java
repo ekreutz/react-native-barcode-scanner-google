@@ -42,7 +42,7 @@ public class CameraSourcePreview extends ViewGroup {
     private boolean mSurfaceAvailable;
     private CameraSource mCameraSource;
     private int mWidth = 0, mHeight = 0;
-    private int fillMode = FILL_MODE_FIT;
+    private int fillMode = FILL_MODE_COVER;
 
     public CameraSourcePreview(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -135,8 +135,12 @@ public class CameraSourcePreview extends ViewGroup {
         previewLayout();
     }
 
+    /* layout the surface that we draw the camera stream on */
     private void previewLayout() {
         if (mWidth == 0 || mHeight == 0) return;
+
+        // Step 1: determine the size of the camera stream
+        // --------------------------------
 
         int previewWidth = 800;
         int previewHeight = 480;
@@ -157,22 +161,37 @@ public class CameraSourcePreview extends ViewGroup {
             previewHeight = tmp;
         }
 
-        double scaleRatio = 1.0;
+        // Step 2. Determine how to scale the stream so that it fits snugly in this view
+        // --------------------------------
 
-        if (fillMode == FILL_MODE_COVER) {
-            scaleRatio = Math.max(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
-        } else if (fillMode == FILL_MODE_FIT) {
-            scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
-        }
+        double scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
 
-        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2);
-        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2);
-        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2);
-        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2);
+        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2) + 1;
+        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2) - 1;
+        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2) + 1;
+        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2) - 1;
 
+        // apply the layout to the surface
         for (int i = 0; i < getChildCount(); ++i) {
             getChildAt(i).layout(childLeft, childTop, childRight, childBottom);
         }
+
+        // Step 3: Either fill this view, or barely touch the edges
+        // --------------------------------
+
+        float r = 1.0f;
+
+        if (fillMode == FILL_MODE_COVER) {
+            r = Math.max((float) mWidth / (childRight - childLeft), (float) mHeight / (childBottom - childTop));
+        } else if (fillMode == FILL_MODE_FIT) {
+            r = Math.min((float) mWidth / (childRight - childLeft), (float) mHeight / (childBottom - childTop));
+        }
+
+        setScaleX(r);
+        setScaleY(r);
+
+        // Step 4: try starting the stream again (if needed) after our modifications
+        // --------------------------------
 
         try {
             startIfReady();

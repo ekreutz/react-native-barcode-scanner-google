@@ -2,6 +2,7 @@ package com.ekreutz.barcodescanner;
 
 import android.util.Log;
 
+import com.ekreutz.barcodescanner.camera.CameraSourcePreview;
 import com.ekreutz.barcodescanner.ui.BarcodeScannerView;
 import com.ekreutz.barcodescanner.util.BarcodeFormat;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -48,6 +49,7 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
             {
                 put("BarcodeType", BarcodeFormat.REVERSE_FORMATS);
                 put("FocusMode", getFocusModes());
+                put("CameraFillMode", getCameraFillModes());
             }
         });
     }
@@ -58,6 +60,15 @@ public class BarcodeScannerModule extends ReactContextBaseJavaModule implements 
                 put("AUTO", 0);
                 put("TAP", 1);
                 put("FIXED", 2);
+            }
+        });
+    }
+
+    private static Map<String, Integer> getCameraFillModes() {
+        return Collections.unmodifiableMap(new HashMap<String, Integer>() {
+            {
+                put("COVER", CameraSourcePreview.FILL_MODE_COVER);
+                put("FIT", CameraSourcePreview.FILL_MODE_FIT);
             }
         });
     }

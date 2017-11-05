@@ -33,8 +33,8 @@ import java.io.IOException;
 public class CameraSourcePreview extends ViewGroup {
     private static final String TAG = "CameraSourcePreview";
 
-    private static final int FILL_MODE_COVER = 0;
-    private static final int FILL_MODE_FIT = 1;
+    public static final int FILL_MODE_COVER = 0;
+    public static final int FILL_MODE_FIT = 1;
 
     private Context mContext;
     private SurfaceView mSurfaceView;
@@ -102,6 +102,13 @@ public class CameraSourcePreview extends ViewGroup {
                 start(mCameraSource);
             }
         }
+    }
+
+    // Set the camera stream fill mode
+    public void setFillMode(int fillMode) {
+        if (fillMode != FILL_MODE_COVER && fillMode != FILL_MODE_FIT) return;
+        this.fillMode = fillMode;
+        previewLayout();
     }
 
     private class SurfaceCallback implements SurfaceHolder.Callback {

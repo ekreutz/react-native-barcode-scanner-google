@@ -53,6 +53,13 @@ public class BarcodeScannerManager extends SimpleViewManager<BarcodeScannerView>
         view.setFocusMode(focusMode);
     }
 
+    // Fill modes
+    // Possible values: 0 = cover the whole view, 1 = fit within view
+    @ReactProp(name = "cameraFillMode", defaultInt = 0)
+    public void setCameraFillMode(BarcodeScannerView view, int cameraFillMode) {
+        view.setCameraFillMode(cameraFillMode);
+    }
+
     /**
      * Handle results from requestPermissions.
      * Call this method from MainActivity.java in your React Native app or implement a version of your own that checks for the camera permission.

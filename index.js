@@ -1,5 +1,6 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import { requireNativeComponent, NativeModules, View, TouchableHighlight } from 'react-native';
+import PropTypes from 'prop-types'
 
 const scannerModule = NativeModules['BarcodeScannerModule'];
 

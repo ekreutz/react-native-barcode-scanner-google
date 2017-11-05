@@ -11,6 +11,7 @@ Compared to other barcode scanners for Android that don't rely on Google's Barco
   - More accurate
   - More convenient (supports scanning in any direction)
 
+Note that this barcode scanner doesn't ship with a fancy overlay to display a scanning interface to the user. It's just a fast scanner view that shows the camera stream, ontop of which you can overlay your own UI.
 
 ## Instructions
 

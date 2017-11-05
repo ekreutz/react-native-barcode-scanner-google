@@ -185,14 +185,6 @@ public class CameraSourcePreview extends ViewGroup {
 
     private boolean isPortraitMode() {
         int orientation = mContext.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            return false;
-        }
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            return true;
-        }
-
-        Log.d(TAG, "isPortraitMode returning false by default");
-        return false;
+        return orientation == Configuration.ORIENTATION_PORTRAIT;
     }
 }

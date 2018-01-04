@@ -50,7 +50,13 @@ class BarcodeScanner extends Component {
         if (onBarcodeRead) {
           onBarcodeRead({
             data: event.nativeEvent.data, // the barcode itself
-            type: event.nativeEvent.type  // the barcode type, eg "EAN_13"
+            type: event.nativeEvent.type,  // the barcode type, eg "EAN_13"
+            left: event.nativeEvent.left,
+            right: event.nativeEvent.right,
+            top: event.nativeEvent.top,
+            bottom: event.nativeEvent.bottom,
+            cameraSizeWidth: event.nativeEvent.cameraSizeWidth,
+            cameraSizeHeight: event.nativeEvent.cameraSizeHeight
           });
         }
         break;

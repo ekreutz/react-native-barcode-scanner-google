@@ -25,8 +25,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.Tracker;
+import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import android.graphics.RectF;
 
 import java.io.IOException;
 
@@ -266,7 +268,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         mCameraSource = new CameraSource.Builder(mContext.getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(1600, 900)
-                .setRequestedFps(15.0f)
+                .setRequestedFps(30.0f)
                 .setPreferredFocusModes(PREFERRED_FOCUS_MODES)
                 .build();
     }
@@ -332,12 +334,40 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
             /**
              * Start tracking the detected item instance within the item overlay.
              */
-            @Override
+             @Override
             public void onNewItem(int id, Barcode item) {
                 // Act on new barcode found
                 WritableMap event = Arguments.createMap();
                 event.putString("data", item.displayValue);
                 event.putString("type", BarcodeFormat.get(item.format));
+
+                RectF rect = new RectF(item.getBoundingBox());
+                event.putString("left", String.valueOf(rect.left));
+                event.putString("right", String.valueOf(rect.right));
+                event.putString("top", String.valueOf(rect.top));
+                event.putString("bottom", String.valueOf(rect.bottom));
+
+                event.putInt("cameraSizeWidth", mCameraSource.getPreviewSize().getWidth() );
+                event.putInt("cameraSizeHeight", mCameraSource.getPreviewSize().getHeight() );
+
+                sendNativeEvent(BARCODE_FOUND_KEY, event);
+            }
+
+            @Override
+            public void onUpdate(Detector.Detections<Barcode> detectionResults, Barcode item) {
+                // Act on new barcode found
+                WritableMap event = Arguments.createMap();
+                event.putString("data", item.displayValue);
+                event.putString("type", BarcodeFormat.get(item.format));
+
+                RectF rect = new RectF(item.getBoundingBox());
+                event.putString("left", String.valueOf(rect.left));
+                event.putString("right", String.valueOf(rect.right));
+                event.putString("top", String.valueOf(rect.top));
+                event.putString("bottom", String.valueOf(rect.bottom));
+
+                event.putInt("cameraSizeWidth", mCameraSource.getPreviewSize().getWidth() );
+                event.putInt("cameraSizeHeight", mCameraSource.getPreviewSize().getHeight() );
 
                 sendNativeEvent(BARCODE_FOUND_KEY, event);
             }

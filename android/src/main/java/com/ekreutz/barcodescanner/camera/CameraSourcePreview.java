@@ -173,10 +173,28 @@ public class CameraSourcePreview extends ViewGroup {
 
         double scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
 
-        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2) + 1;
-        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2) - 1;
-        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2) + 1;
-        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2) - 1;
+        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2);
+        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2);
+        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2);
+        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2);
+
+        if (fillMode == FILL_MODE_COVER) {
+            childLeft = 0;
+            childTop = 0;        
+            childBottom = mHeight;
+            childRight = mWidth;
+            if (childBottom > childRight) { // Height > Width
+                int scalePercent = (mHeight * 100) / previewHeight;
+                childRight = (previewWidth * scalePercent) / 100;
+                childLeft -= (childRight - mWidth) / 2;
+                childRight -= (childRight - mWidth) / 2;
+            } else { // Width > Height
+                int scalePercent = (mWidth * 100) / previewWidth;
+                childBottom = (previewHeight * scalePercent) / 100;
+                childTop -= (childBottom - mHeight) / 2;
+                childBottom -= (childBottom - mHeight) / 2;
+            }
+        } 
 
         // apply the layout to the surface
         for (int i = 0; i < getChildCount(); ++i) {
@@ -193,7 +211,7 @@ public class CameraSourcePreview extends ViewGroup {
         } else if (fillMode == FILL_MODE_FIT) {
             r = Math.min((float) mWidth / (childRight - childLeft), (float) mHeight / (childBottom - childTop));
         }
-
+        
         setScaleX(r);
         setScaleY(r);
 

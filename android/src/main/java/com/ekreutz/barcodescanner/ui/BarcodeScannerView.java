@@ -46,7 +46,17 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
 
     // For focusing we prefer two continuous methods first, and then finally the "auto" mode which is fired on tap.
     // A device should support at least one of these for scanning to be possible at all.
-    private static final String[] PREFERRED_FOCUS_MODES = {Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE, Camera.Parameters.FOCUS_MODE_AUTO, Camera.Parameters.FOCUS_MODE_FIXED};
+    private static final String[] PREFERRED_FOCUS_MODES = {
+        Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
+        Camera.Parameters.FOCUS_MODE_AUTO,
+        Camera.Parameters.FOCUS_MODE_FIXED
+    };
+
+    // Since we are only implementig for scaning codes, we are only interested in off and torch mode.
+    private static final String[] RELEVANT_FLASH_MODES = {
+        Camera.Parameters.FLASH_MODE_OFF,
+        Camera.Parameters.FLASH_MODE_TORCH
+    };
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
@@ -221,6 +231,19 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         }
 
         return mCameraSource != null && mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
+    }
+
+    /**
+     * Sets torch mode.
+     * Possible values: 0 = off, 1 = torch (always on)
+     * @param torchMode
+     */
+    public boolean setTorchMode(int torchMode) {
+        if (torchMode < 0 || torchMode > 1) {
+            torchMode = 0;
+        }
+
+        return mCameraSource != null && mCameraSource.setFlashMode(RELEVANT_FLASH_MODES[torchMode]);
     }
 
     /**

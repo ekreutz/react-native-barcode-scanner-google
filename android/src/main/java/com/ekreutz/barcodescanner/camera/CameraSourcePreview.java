@@ -171,31 +171,23 @@ public class CameraSourcePreview extends ViewGroup {
         // Step 2. Determine how to scale the stream so that it fits snugly in this view
         // --------------------------------
 
-        double scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
+        double scaleRatio = 1.0;
 
-        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2) + 1;
-        int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2) - 1;
-        int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2) + 1;
-        int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2) - 1;
+        if (fillMode == FILL_MODE_COVER) {
+            scaleRatio = Math.max((float) mWidth / previewWidth, (float) mHeight / previewHeight);
+        } else if (fillMode == FILL_MODE_FIT) {
+            scaleRatio = Math.min((float) mWidth / previewWidth, (float) mHeight / previewHeight);
+        }
+
+        int childLeft = (int) Math.floor((mWidth - scaleRatio * previewWidth) / 2);
+        int childRight = (int) Math.ceil((mWidth + scaleRatio * previewWidth) / 2);
+        int childTop = (int) Math.floor((mHeight - scaleRatio * previewHeight) / 2);
+        int childBottom = (int) Math.ceil((mHeight + scaleRatio * previewHeight) / 2);
 
         // apply the layout to the surface
         for (int i = 0; i < getChildCount(); ++i) {
             getChildAt(i).layout(childLeft, childTop, childRight, childBottom);
         }
-
-        // Step 3: Either fill this view, or barely touch the edges
-        // --------------------------------
-
-        float r = 1.0f;
-
-        if (fillMode == FILL_MODE_COVER) {
-            r = Math.max((float) mWidth / (childRight - childLeft), (float) mHeight / (childBottom - childTop));
-        } else if (fillMode == FILL_MODE_FIT) {
-            r = Math.min((float) mWidth / (childRight - childLeft), (float) mHeight / (childBottom - childTop));
-        }
-
-        setScaleX(r);
-        setScaleY(r);
 
         // Step 4: try starting the stream again (if needed) after our modifications
         // --------------------------------

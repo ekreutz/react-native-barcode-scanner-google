@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { requireNativeComponent, NativeModules, View, TouchableHighlight } from 'react-native';
+import { requireNativeComponent, NativeModules, View, TouchableHighlight, ViewPropTypes } from 'react-native';
 import PropTypes from 'prop-types'
 
 const scannerModule = NativeModules['BarcodeScannerModule'];
@@ -18,7 +18,7 @@ class BarcodeScanner extends Component {
     barcodeTypes: PropTypes.number, // int
     focusMode: PropTypes.number, // int
     cameraFillMode: PropTypes.number, // int
-    ...View.propTypes
+    ...ViewPropTypes
   };
 
   componentWillMount() {

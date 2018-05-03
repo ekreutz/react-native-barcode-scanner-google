@@ -53,6 +53,13 @@ public class BarcodeScannerManager extends SimpleViewManager<BarcodeScannerView>
         view.setFocusMode(focusMode);
     }
 
+    // Torch modes
+    // Possible values: 0 = flash off, 1 = Torch
+    @ReactProp(name="torchMode", defaultInt = 0)
+    public void setTorchMode(BarcodeScannerView view, int torchMode) {
+        view.setTorchMode(torchMode);
+    }
+
     // Fill modes
     // Possible values: 0 = cover the whole view, 1 = fit within view
     @ReactProp(name = "cameraFillMode", defaultInt = 0)

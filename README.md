@@ -14,12 +14,12 @@ Note that this barcode scanner doesn't ship with a fancy overlay to display a sc
 
 ## Instructions
 
-To include the latest version (1.2.0) `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
+To include the latest version (1.3.0) `react-native-barcode-scanner-google` in your project, run the following terminal commands in your React Native project root folder:
 
 1.
 
 ```
-npm install git+https://github.com/ekreutz/react-native-barcode-scanner-google.git#v1.2.0 --save
+npm install git+https://github.com/ekreutz/react-native-barcode-scanner-google.git#v1.3.0 --save
 ```
 
 2.

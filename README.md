@@ -1,5 +1,17 @@
 # react-native-barcode-scanner-google
 
+___
+
+**Author's notes**
+
+1. This is *not* the exact version you install using `npm i react-native-barcode-scanner-google`. That version was uploaded based on this code, by a third party. Use at your own risk!
+
+2. As of September 2019, this repo is no longer being maintained. Due to its simplicitity it should still work great though so keep using it by all means!
+
+3. Look into https://github.com/react-native-community/react-native-camera for new projects if the bigger package/dependency tree isn't a problem. The latest version includes an implementation of Google's Vision API via this library. Enjoy!
+
+___
+
 Very fast barcode scanner view for React Native applications. Only for Android. Use something like `react-native-camera` for iOS.
 The postfix `-google` is added since the native implementation is based on Google's Barcode API:
 https://developers.google.com/vision/barcodes-overview

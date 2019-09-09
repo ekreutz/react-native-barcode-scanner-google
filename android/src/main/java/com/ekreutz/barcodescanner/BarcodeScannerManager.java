@@ -2,8 +2,8 @@ package com.ekreutz.barcodescanner;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import com.ekreutz.barcodescanner.ui.BarcodeScannerView;
 import com.facebook.react.uimanager.SimpleViewManager;

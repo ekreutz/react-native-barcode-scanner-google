@@ -1,7 +1,5 @@
 package com.ekreutz.barcodescanner;
 
-import android.util.Log;
-
 import com.ekreutz.barcodescanner.camera.CameraSourcePreview;
 import com.ekreutz.barcodescanner.ui.BarcodeScannerView;
 import com.ekreutz.barcodescanner.util.BarcodeFormat;

@@ -1,5 +1,5 @@
 {
-    "name": "react-native-barcode-scanner-google",
+    "name": "@qdivision/react-native-barcode-scanner-google",
     "version": "2.0.0",
     "description":
         "Barcode scanner for react native, which implements barcode detection from Google's Barcode API.",

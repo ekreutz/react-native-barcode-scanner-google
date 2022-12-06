@@ -1,18 +1,37 @@
 apply plugin: 'com.android.library'
 
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.0.4'
+    }
+}
+
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 31
+    buildToolsVersion "30.0.2"
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 22
+        minSdkVersion 21
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+    gradlePluginPortal()
+}
+
 dependencies {
-    compile 'com.google.android.gms:play-services-vision:8.4.0' // 8.1.0 or higher required
-    compile 'com.facebook.react:react-native:0.20.+'
+    implementation 'com.google.android.gms:play-services-vision:8.4.0' // 8.1.0 or higher required
+    implementation 'com.facebook.react:react-native:0.20.+'
 }

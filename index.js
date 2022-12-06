@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import {
   requireNativeComponent,
   NativeModules,
-  View,
-  TouchableHighlight
+  View
 } from 'react-native';
 import PropTypes from 'prop-types';
 
